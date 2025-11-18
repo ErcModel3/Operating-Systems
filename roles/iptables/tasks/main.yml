@@ -1,0 +1,22 @@
+---
+- name: Install iptables-persistent
+  apt:
+    name:
+      - iptables-persistent
+    update_cache: yes
+
+- name: Create config directory
+  file:
+    dest: /etc/iptables/
+    state: directory
+    mode: '0664'
+
+- name: Deploy iptables configs
+  template:
+    src: "{{ item }}"
+    dest: /etc/iptables/{{ item }}
+  loop:
+    - class-a.txt.j2
+    - class-b.txt.j2
+    - class-c.txt.j2
+  # iptables-save > file-with-iptables-rules.txt

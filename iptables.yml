@@ -1,0 +1,7 @@
+---
+- name: Install and deploy firewall
+  hosts: firewall-test
+  become: yes
+  roles:
+    - iptables
+  

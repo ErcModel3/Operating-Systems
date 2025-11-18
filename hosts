@@ -1,5 +1,11 @@
 [firewall]
+
+[firewall-prod]
 10.0.0.184
 
-[firewall:vars]
-ansible_user=s4228665
+[firewall-test]
+10.0.0.185
+
+[firewall:children]
+firewall
+firewall-test
