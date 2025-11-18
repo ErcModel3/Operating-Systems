@@ -1,0 +1,5 @@
+[firewall]
+10.0.0.184
+
+[firewall:vars]
+ansible_user=s4228665
