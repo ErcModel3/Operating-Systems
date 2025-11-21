@@ -16,7 +16,9 @@
     src: "{{ item }}.j2"
     dest: /etc/iptables/{{ item }}
   loop:
-    - class-a.txt
-    - class-b.txt
-    - class-c.txt
-  # iptables-save > file-with-iptables-rules.txt
+    - class-a
+    - class-b
+    - class-c
+  
+- name: Apply iptables configs
+  command: iptables-save > {{ item }}
