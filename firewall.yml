@@ -1,0 +1,8 @@
+---
+- name: Build and deploy the whole firewall
+  hosts: firewall-test
+  become: yes
+  roles:
+    - netplan
+    - iptables
+  
