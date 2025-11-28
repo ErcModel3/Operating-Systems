@@ -1,0 +1,15 @@
+---
+- name: Disable cloud.cfg network config
+  copy:
+    content: "network: {config: disabled}"
+    dest: /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+    mode: '0644'
+  notify: netplan apply
+
+- name: Deploy templated netplan config
+  template:
+    src: netplan.j2
+    dest: "{{ netplan_config_file }}"
+    mode: '0644'
+    backup: yes
+  notify: netplan apply

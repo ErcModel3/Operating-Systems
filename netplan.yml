@@ -1,29 +1,6 @@
 ---
-- name: Deploy netplan template
-  hosts: all
+- name: Deploy base netplan template
+  hosts: firewall-test
   become: yes
-  vars:
-    dns_servers:
-    - "8.8.8.8"
-    - "1.1.1.1"
-    netplan_config_file: "/etc/netplan/50-cloud-init.yaml"
-
-  tasks:
-  - name: Disable cloud.cfg network config
-    copy:
-      content: "network: {config: disabled}"
-      dest: /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
-      mode: '0644'
-    notify: netplan apply
-
-  - name: Deploy templated netplan config
-    template:
-      src: netplan.j2
-      dest: "{{ netplan_config_file }}"
-      mode: '0644'
-      backup: yes
-    notify: netplan apply
-
-  handlers:
-    - name: netplan apply
-      command: netplan apply
+  roles:
+    - netplan
