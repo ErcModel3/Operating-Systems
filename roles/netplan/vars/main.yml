@@ -1,0 +1,5 @@
+---
+dns_servers:
+- "8.8.8.8"
+- "1.1.1.1"
+netplan_config_file: "/etc/netplan/50-cloud-init.yaml"
