@@ -1,11 +1,11 @@
 [firewall]
 
 [firewall-prod]
-10.0.0.184
+firewall1-u ansible_host=10.0.0.184
 
 [firewall-test]
-10.0.0.185
+firewall2-u ansible_host=10.0.1.185
 
 [firewall:children]
-firewall
+firewall-prod
 firewall-test
