@@ -1,0 +1,61 @@
+---
+- name: Provision the firewall
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Set the hostname
+      hostname:
+        name: "{{ inventory_hostname }}"
+
+    - name: Create my user
+      user:
+        name: s4228665
+        append: yes
+        create_home: yes
+        state: present
+
+    - name: Allow passwordless sudo
+      lineinfile:
+        path: /etc/sudoers.d/s4228665
+        line: "s4228665 ALL=(ALL) NOPASSWD:ALL"
+        create: yes
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
+    - name: Install dependencies for the WiFi driver
+      apt:
+        name:
+          - build-essential
+          - dkms
+          - linux-headers-{{ ansible_kernel }}
+          - bc
+        state: present
+        update_cache: yes
+
+    - name: Clone the driver repo
+      git:
+        repo: https://github.com/morrownr/8812au-20210820.git
+        dest: /usr/src/rtl8812au-driver
+        version: main
+        force: yes
+
+    - name: Run the install script
+      shell: |
+        cd /usr/src/rtl8812au-driver
+        printf 'n\nn\n' | ./install-driver.sh
+      args:
+        creates: /lib/modules/{{ ansible_kernel }}/kernel/drivers/net/wireless/88XXau.ko
+      register: driver_install
+
+    - name: Reboot if driver was installed for the first time
+      reboot:
+        msg: "Rebooting to load Realtek 8812AU WiFi driver"
+        reboot_timeout: 300
+      when: driver_install.changed
+
+    - name: Check if the driver loaded correctly
+      shell: lsmod | grep 88XXau
+      register: driver_check
+      changed_when: false
+      failed_when: false
