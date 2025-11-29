@@ -2,6 +2,7 @@
 - name: Provision the firewall
   hosts: all
   become: yes
+  remote_user: ubuntu
 
   tasks:
     - name: Set the hostname
@@ -14,6 +15,7 @@
         append: yes
         create_home: yes
         state: present
+        groups: sudo
 
     - name: Allow passwordless sudo
       lineinfile:
@@ -23,39 +25,80 @@
         mode: '0440'
         validate: 'visudo -cf %s'
 
-    - name: Install dependencies for the WiFi driver
+    - name: Deply ssh key
+      authorized_key:
+        user: s4228665
+        key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBe2NbH9tX4MVZcfKTggOt60YgtHCbn2iE4S/WjZiKJz alex@Mac.localdomain
+        state: present
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install kernel headers and build tools
       apt:
         name:
+          - linux-headers-raspi
           - build-essential
           - dkms
-          - linux-headers-{{ ansible_kernel }}
+          - git
           - bc
         state: present
-        update_cache: yes
 
-    - name: Clone the driver repo
+    - name: Clone RTL88x2BU WiFi driver
       git:
-        repo: https://github.com/morrownr/8812au-20210820.git
-        dest: /usr/src/rtl8812au-driver
+        repo: https://github.com/morrownr/88x2bu-20210702.git
+        dest: /usr/src/rtl88x2bu-driver
         version: main
         force: yes
 
-    - name: Run the install script
-      shell: |
-        cd /usr/src/rtl8812au-driver
-        printf 'n\nn\n' | ./install-driver.sh
-      args:
-        creates: /lib/modules/{{ ansible_kernel }}/kernel/drivers/net/wireless/88XXau.ko
-      register: driver_install
+    - name: Re-gather facts after kernel headers install
+      setup:
 
-    - name: Reboot if driver was installed for the first time
-      reboot:
-        msg: "Rebooting to load Realtek 8812AU WiFi driver"
-        reboot_timeout: 300
-      when: driver_install.changed
-
-    - name: Check if the driver loaded correctly
-      shell: lsmod | grep 88XXau
-      register: driver_check
-      changed_when: false
+    - name: Check if RTL88x2BU driver already installed
+      shell: dkms status 88x2bu/5.13.6 | grep "{{ ansible_kernel }}" | grep "installed"
+      register: dkms_check
       failed_when: false
+      changed_when: false
+
+    - name: Add driver to DKMS
+      command: dkms add /usr/src/rtl88x2bu-driver
+      args:
+        chdir: /usr/src/rtl88x2bu-driver
+      when: dkms_check.rc != 0
+      register: dkms_add
+      failed_when:
+        - dkms_add.rc != 0
+        - '"already added" not in dkms_add.stderr'
+
+    - name: Build RTL88x2BU DKMS module
+      command: dkms build 88x2bu/5.13.6 -k {{ ansible_kernel }}
+      when: dkms_check.rc != 0
+
+    - name: Install RTL88x2BU DKMS module
+      command: dkms install 88x2bu/5.13.6 -k {{ ansible_kernel }}
+      when: dkms_check.rc != 0
+
+    - name: Load 88x2bu kernel module
+      community.general.modprobe:
+        name: 88x2bu
+        state: present
+
+    - name: Ensure module loads on boot
+      lineinfile:
+        path: /etc/modules-load.d/rtl88x2bu.conf
+        line: "88x2bu"
+        create: yes
+        mode: '0644'
+
+    - name: Verify driver loaded
+      shell: lsmod | grep 88x2bu
+      register: driver_verify
+      changed_when: false
+      failed_when: driver_verify.rc != 0
+
+    - name: Display driver status
+      debug:
+        msg: "RTL88x2BU driver loaded successfully"
+      when: driver_verify.rc == 0
