@@ -1,11 +1,11 @@
 [Unit]
 Description=Hostapd lan2 Access Point
-After=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=forking
 PIDFile=/run/hostapd-lan2.pid
-ExecStartPre=/sbin/ip link set wlx1cbfce8347d0 up
 ExecStart=/usr/sbin/hostapd -B -P /run/hostapd-lan2.pid /etc/hostapd/hostapd-lan2.conf
 ExecStop=/bin/kill -TERM $MAINPID
 Restart=on-failure
