@@ -10,6 +10,6 @@
   template:
     src: netplan.j2
     dest: "{{ netplan_config_file }}"
-    mode: '0644'
+    mode: '0600'
     backup: yes
   notify: netplan apply
