@@ -7,7 +7,7 @@ network:
             dhcp4: false
             dhcp6: false
             addresses:
-                - {{ wan_ip }}/{{ wan_prefix }}
+                - {{ ansible_host }}/{{ wan_prefix }}
             nameservers:
                 addresses: {{ dns_servers | to_json }}
                 search: []
@@ -21,11 +21,9 @@ network:
             dhcp6: false
             addresses:
                 - {{ lan_ip }}/{{ lan_prefix }}
-            access-points: {}
         
         {{ lan2_interface }}:
             dhcp4: false
             dhcp6: false
             addresses:
                 - {{ lan2_ip }}/{{ lan2_prefix }}
-            access-points: {}
