@@ -1,6 +1,6 @@
 ---
 - name: Deploy base netplan template
-  hosts: firewall-test
+  hosts: firewall
   become: yes
   roles:
     - netplan
