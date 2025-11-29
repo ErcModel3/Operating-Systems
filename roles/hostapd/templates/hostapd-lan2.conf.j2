@@ -2,12 +2,12 @@ interface={{ lan2_interface }}
 driver=nl80211
 ssid={{ lan2_ssid }}
 hw_mode=g
-channel=6
+channel=11
 country_code={{ country_code }}
 
 ieee80211n=1
-require_ht=1
-ht_capab=[HT40+][SHORT-GI-20][SHORT-GI-40][DSSS_CCK-40]
+ht_capab=[SHORT-GI-20]
+noscan=1
 
 wpa=2
 wpa_passphrase={{ lan2_passphrase }}

@@ -14,16 +14,18 @@ network:
             routes:
                 - to: default
                   via: {{ wan_gateway }}
-    
-    wifis:
+            optional: false
+        
         {{ lan_interface }}:
             dhcp4: false
             dhcp6: false
             addresses:
                 - {{ lan_ip }}/{{ lan_prefix }}
+            optional: false
         
         {{ lan2_interface }}:
             dhcp4: false
             dhcp6: false
             addresses:
                 - {{ lan2_ip }}/{{ lan2_prefix }}
+            optional: false
