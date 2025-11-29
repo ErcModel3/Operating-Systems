@@ -1,12 +1,31 @@
 network:
+    version: 2
+    renderer: networkd
+    
     ethernets:
-        {{ ansible_default_ipv4.interface }}:
+        {{ wan_interface }}:
+            dhcp4: false
+            dhcp6: false
             addresses:
-            - {{ ansible_default_ipv4.address }}/24
+                - {{ wan_ip }}/{{ wan_prefix }}
             nameservers:
                 addresses: {{ dns_servers | to_json }}
                 search: []
             routes:
-            -   to: default
-                via: {{ ansible_default_ipv4.gateway }}
-    version: 2
+                - to: default
+                  via: {{ wan_gateway }}
+    
+    wifis:
+        {{ lan_interface }}:
+            dhcp4: false
+            dhcp6: false
+            addresses:
+                - {{ lan_ip }}/{{ lan_prefix }}
+            access-points: {}
+        
+        {{ lan2_interface }}:
+            dhcp4: false
+            dhcp6: false
+            addresses:
+                - {{ lan2_ip }}/{{ lan2_prefix }}
+            access-points: {}
