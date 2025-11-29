@@ -1,0 +1,14 @@
+---
+- name: daemon reload
+  systemd:
+    daemon_reload: yes
+
+- name: restart hostapd-lan
+  systemd:
+    name: hostapd-lan.service
+    state: restarted
+
+- name: restart hostapd-lan2
+  systemd:
+    name: hostapd-lan2.service
+    state: restarted

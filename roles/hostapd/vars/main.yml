@@ -1,0 +1,14 @@
+---
+lan_interface: "wlan0"
+lan2_interface: "wlx1cbfce8347d0"
+
+lan_ssid: "Firewall-5G"
+lan2_ssid: "Firewall-2.4G"
+
+lan_passphrase: "password"
+lan2_passphrase: "password"
+
+lan_ip: "172.16.0.1"
+lan2_ip: "192.168.0.1"
+
+country_code: "GB"
