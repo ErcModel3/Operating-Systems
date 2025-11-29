@@ -1,0 +1,19 @@
+interface={{ lan_interface }}
+driver=nl80211
+ssid={{ lan_ssid }}
+hw_mode=a
+channel=36
+country_code={{ country_code }}
+
+ieee80211n=1
+require_ht=1
+ht_capab=[HT40+][SHORT-GI-20][SHORT-GI-40][DSSS_CCK-40]
+
+wpa=2
+wpa_passphrase={{ lan_passphrase }}
+wpa_key_mgmt=WPA-PSK
+rsn_pairwise=CCMP
+
+auth_algs=1
+macaddr_acl=0
+wmm_enabled=1
