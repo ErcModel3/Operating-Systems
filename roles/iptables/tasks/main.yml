@@ -21,4 +21,8 @@
     - class-c
   
 - name: Apply iptables configs
-  command: iptables-save > {{ item }}
+  shell: iptables-restore < /etc/iptables/{{ item }}
+  loop:
+    - class-a
+    - class-b
+    - class-c

@@ -1,0 +1,19 @@
+interface={{ lan2_interface }}
+driver=nl80211
+ssid={{ lan2_ssid }}
+hw_mode=g
+channel=11
+country_code={{ country_code }}
+
+ieee80211n=1
+ht_capab=[SHORT-GI-20]
+obss_interval=0
+
+wpa=2
+wpa_passphrase={{ lan2_passphrase }}
+wpa_key_mgmt=WPA-PSK
+rsn_pairwise=CCMP
+
+auth_algs=1
+macaddr_acl=0
+wmm_enabled=1
