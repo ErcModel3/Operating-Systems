@@ -1,0 +1,47 @@
+---
+- name: Remove installed WiFi drivers
+  hosts: all
+  become: yes
+  remote_user: ubuntu
+
+  tasks:
+    - name: Unload 8821au kernel module
+      community.general.modprobe:
+        name: 8821au
+        state: absent
+      failed_when: false
+
+    - name: Remove 8821au from modules-load.d
+      file:
+        path: /etc/modules-load.d/rtl8821au.conf
+        state: absent
+
+    - name: Check if 8821au is installed via DKMS
+      shell: dkms status 8821au
+      register: dkms_status
+      failed_when: false
+      changed_when: false
+
+    - name: Remove 8821au from DKMS
+      shell: dkms remove 8821au/{{ item }} --all
+      with_items: "{{ dkms_status.stdout_lines }}"
+      when:
+        - dkms_status.rc == 0
+        - item != ""
+      failed_when: false
+      register: dkms_remove
+
+    - name: Remove RTL8821AU driver source directory
+      file:
+        path: /usr/src/rtl8821au-driver
+        state: absent
+
+    - name: Verify 8821au module is unloaded
+      shell: lsmod | grep -c 8821au || echo "not_loaded"
+      register: verify_unload
+      changed_when: false
+      failed_when: false
+
+    - name: Display removal status
+      debug:
+        msg: "RTL8821AU driver has been successfully removed"

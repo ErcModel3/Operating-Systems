@@ -46,59 +46,37 @@
           - bc
         state: present
 
-    - name: Clone RTL88x2BU WiFi driver
+    - name: Clone RTL8821AU WiFi driver
       git:
-        repo: https://github.com/morrownr/88x2bu-20210702.git
-        dest: /usr/src/rtl88x2bu-driver
+        repo: https://github.com/morrownr/8821au-20210708.git
+        dest: /usr/src/rtl8821au-driver
         version: main
         force: yes
 
-    - name: Re-gather facts after kernel headers install
-      setup:
+    - name: Install RTL8821AU driver using installation script
+      shell: cd /usr/src/rtl8821au-driver && sudo ./install-driver.sh
+      environment:
+        SUDO_ALLOW_PASSWD_STDIN: "true"
 
-    - name: Check if RTL88x2BU driver already installed
-      shell: dkms status 88x2bu/5.13.6 | grep "{{ ansible_kernel }}" | grep "installed"
-      register: dkms_check
-      failed_when: false
-      changed_when: false
-
-    - name: Add driver to DKMS
-      command: dkms add /usr/src/rtl88x2bu-driver
-      args:
-        chdir: /usr/src/rtl88x2bu-driver
-      when: dkms_check.rc != 0
-      register: dkms_add
-      failed_when:
-        - dkms_add.rc != 0
-        - '"already added" not in dkms_add.stderr'
-
-    - name: Build RTL88x2BU DKMS module
-      command: dkms build 88x2bu/5.13.6 -k {{ ansible_kernel }}
-      when: dkms_check.rc != 0
-
-    - name: Install RTL88x2BU DKMS module
-      command: dkms install 88x2bu/5.13.6 -k {{ ansible_kernel }}
-      when: dkms_check.rc != 0
-
-    - name: Load 88x2bu kernel module
+    - name: Load 8821au kernel module
       community.general.modprobe:
-        name: 88x2bu
+        name: 8821au
         state: present
 
     - name: Ensure module loads on boot
       lineinfile:
-        path: /etc/modules-load.d/rtl88x2bu.conf
-        line: "88x2bu"
+        path: /etc/modules-load.d/rtl8821au.conf
+        line: "8821au"
         create: yes
         mode: '0644'
 
     - name: Verify driver loaded
-      shell: lsmod | grep 88x2bu
+      shell: lsmod | grep 8821au
       register: driver_verify
       changed_when: false
       failed_when: driver_verify.rc != 0
 
     - name: Display driver status
       debug:
-        msg: "RTL88x2BU driver loaded successfully"
+        msg: "RTL8821AU driver loaded successfully"
       when: driver_verify.rc == 0
