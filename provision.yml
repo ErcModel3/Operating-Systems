@@ -1,9 +1,8 @@
 ---
-- name: Provision the firewall
+- name: Bootstrap root access for provisioning
   hosts: all
   become: yes
-  remote_user: ubuntu
-
+  remote_user: s4228665
   tasks:
     - name: Set the hostname
       hostname:
@@ -31,10 +30,16 @@
         key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBe2NbH9tX4MVZcfKTggOt60YgtHCbn2iE4S/WjZiKJz alex@Mac.localdomain
         state: present
 
+- name: Provision the firewall
+  hosts: all
+  become: yes
+  remote_user: s4228665
+  tasks:
     - name: Update apt cache
       apt:
         update_cache: yes
         cache_valid_time: 3600
+      timeout: 300
 
     - name: Install kernel headers and build tools
       apt:
@@ -45,6 +50,7 @@
           - git
           - bc
         state: present
+      timeout: 600
 
     - name: Clone RTL8821AU WiFi driver
       git:
@@ -53,10 +59,14 @@
         version: main
         force: yes
 
-    - name: Install RTL8821AU driver using installation script
-      shell: cd /usr/src/rtl8821au-driver && sudo ./install-driver.sh
-      environment:
-        SUDO_ALLOW_PASSWD_STDIN: "true"
+    - name: Install RTL8821AU driver using the install script
+      shell: cd /usr/src/rtl8821au-driver && bash ./install-driver.sh NoPrompt
+      timeout: 1200
+      register: driver_install
+      failed_when: driver_install.rc not in [0, 1, 3]
+      changed_when: "'installed' in driver_install.stdout.lower() or 'added' in driver_install.stdout.lower()"
+      async: 1200
+      poll: 30
 
     - name: Load 8821au kernel module
       community.general.modprobe:

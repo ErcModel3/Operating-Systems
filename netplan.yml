@@ -1,0 +1,6 @@
+---
+- name: Deploy netplan config
+  hosts: firewall
+  become: yes
+  roles:
+    - netplan

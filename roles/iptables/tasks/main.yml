@@ -1,15 +1,15 @@
 ---
-- name: Install iptables-persistent
-  apt:
-    name:
-      - iptables-persistent
-    update_cache: yes
+# - name: Install iptables-persistent
+#   apt:
+#     name:
+#       - iptables-persistent
+#     update_cache: yes
 
 - name: Create config directory
   file:
     dest: /etc/iptables/
     state: directory
-    mode: '0664'
+    mode: '0755'
 
 - name: Deploy iptables configs
   template:
@@ -20,9 +20,11 @@
     - class-b
     - class-c
   
-- name: Apply iptables configs
-  shell: iptables-restore < /etc/iptables/{{ item }}
+- name: Apply class-a rules (with a policy reset)
+  shell: iptables-restore < /etc/iptables/class-a
+
+- name: Apply class-b and class-c rules (TO APPEND)
+  shell: iptables-restore -n < /etc/iptables/{{ item }}
   loop:
-    - class-a
     - class-b
     - class-c

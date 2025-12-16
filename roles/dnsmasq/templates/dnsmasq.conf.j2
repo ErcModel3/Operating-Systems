@@ -1,0 +1,20 @@
+port=0
+cache-size={{ dns_cache_size }}
+log-queries={{ 'yes' if dns_log_queries else 'no' }}
+
+listen-address=127.0.0.1
+listen-address={{ lan_ip }}
+listen-address={{ lan2_ip }}
+bind-interfaces
+
+dhcp-range={{ lan_interface }},{{ lan_dhcp_start }},{{ lan_dhcp_end }},{{ lan_dhcp_lease }}
+dhcp-option=tag:{{ lan_interface }},3,{{ lan_ip }}
+dhcp-option=tag:{{ lan_interface }},6,{{ lan_ip }}
+
+dhcp-range={{ lan2_interface }},{{ lan2_dhcp_start }},{{ lan2_dhcp_end }},{{ lan2_dhcp_lease }}
+dhcp-option=tag:{{ lan2_interface }},3,{{ lan2_ip }}
+dhcp-option=tag:{{ lan2_interface }},6,{{ lan2_ip }}
+
+dhcp-authoritative
+no-ping
+log-dhcp

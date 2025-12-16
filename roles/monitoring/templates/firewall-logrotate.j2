@@ -1,0 +1,19 @@
+# Logrotate configuration for firewall logs
+# Ensures firewall logs don't consume excessive disk space and maintains
+# a rolling history for forensic analysis
+
+/var/log/firewall-drop.log
+/var/log/firewall-input.log
+{
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 syslog adm
+    sharedscripts
+    postrotate
+        /lib/rsyslog/rsyslog-rotate
+    endscript
+}

@@ -1,0 +1,47 @@
+---
+- name: Install monitoring utilities
+  apt:
+    name:
+      - htop
+      - nethogs
+      - nload
+      - net-tools
+    state: present
+    cache_valid_time: 3600
+
+- name: Configure firewall log segregation
+  template:
+    src: firewall-logs.j2
+    dest: /etc/rsyslog.d/99-firewall.conf
+    mode: '0644'
+    backup: yes
+  notify: restart rsyslog
+
+- name: Create firewall log file
+  file:
+    path: /var/log/firewall-drop.log
+    state: touch
+    mode: '0640'
+    owner: syslog
+    group: adm
+  changed_when: false
+
+- name: Create firewall input log file
+  file:
+    path: /var/log/firewall-input.log
+    state: touch
+    mode: '0640'
+    owner: syslog
+    group: adm
+  changed_when: false
+
+- name: Create logrotate configuration for firewall logs
+  template:
+    src: firewall-logrotate.j2
+    dest: /etc/logrotate.d/firewall
+    mode: '0644'
+    backup: yes
+
+- name: Display monitoring tools installed
+  debug:
+    msg: "Monitoring tools (htop, nethogs, nload, net-tools) have been successfully installed and configured"

@@ -5,10 +5,10 @@ dns_servers:
 
 wan_interface: "eth0"
 lan_interface: "wlan0"
-lan2_interface: "wlx1cbfce8347d0"
+lan2_interface: "wlxe0d3629774f7"
 
 wan_prefix: "8"
-wan_gateway: "10.0.0.1"
+wan_gateway: "10.0.0.100"
 
 lan_ip: "172.16.0.1"
 lan_prefix: "16"

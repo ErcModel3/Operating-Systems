@@ -1,2 +1,7 @@
 /.vagrant
 /venv
+
+.DS_Store
+*.MD
+*.tex
+*.pdf

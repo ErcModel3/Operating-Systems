@@ -1,0 +1,24 @@
+---
+- name: Install dnsmasq
+  apt:
+    name: dnsmasq
+    state: present
+    update_cache: yes
+
+- name: Deploy dnsmasq configuration
+  template:
+    src: dnsmasq.conf.j2
+    dest: /etc/dnsmasq.conf
+    backup: yes
+    mode: '0644'
+  notify: restart dnsmasq
+
+- name: Enable dnsmasq service
+  systemd:
+    name: dnsmasq.service
+    enabled: yes
+    state: started
+
+- name: Display dnsmasq status
+  debug:
+    msg: "dnsmasq DHCP server configured successfully for {{ lan_interface }} and {{ lan2_interface }}"

@@ -1,6 +1,6 @@
 ---
 lan_interface: "wlan0"
-lan2_interface: "wlx1cbfce8347d0"
+lan2_interface: "wlxe0d3629774f7"
 
 lan_ssid: "Firewall-5G"
 lan2_ssid: "Firewall-2.4G"

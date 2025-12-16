@@ -1,0 +1,19 @@
+# Firewall log segregation - separates iptables logs from system logs
+# This configuration captures logs with firewall-specific prefixes and
+# writes them to dedicated log files for easier analysis
+
+# Forward drop logs from filter table
+:msg,contains,"FORWARD-DROP" /var/log/firewall-drop.log
+# Input drop logs
+:msg,contains,"INPUT-DROP" /var/log/firewall-input.log
+# LAN-specific forward drops
+:msg,contains,"FORWARD-DROP-LAN" /var/log/firewall-drop.log
+# LAN-specific input drops
+:msg,contains,"INPUT-DROP-LAN" /var/log/firewall-input.log
+# Guest/LAN2-specific forward drops
+:msg,contains,"FORWARD-DROP-GUEST" /var/log/firewall-drop.log
+# Guest/LAN2-specific input drops
+:msg,contains,"INPUT-DROP-GUEST" /var/log/firewall-input.log
+
+# Stop processing these messages in the syslog rule set to prevent duplication
+:msg,contains,"DROP" ~
