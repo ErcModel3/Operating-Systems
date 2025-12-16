@@ -1,9 +1,9 @@
 ---
-- name: Install hostapd
-  apt:
-    name: hostapd
-    state: present
-    update_cache: yes
+# - name: Install hostapd
+#   apt:
+#     name: hostapd
+#     state: present
+#     update_cache: yes
 
 - name: Stop and disable default hostapd service
   systemd:
@@ -12,21 +12,21 @@
     enabled: no
     masked: yes
 
-- name: Deploy LAN hostapd configuration
+- name: Deploy LAN hostapd config
   template:
     src: hostapd-lan.conf.j2
     dest: /etc/hostapd/hostapd-lan.conf
     mode: '0600'
   notify: restart hostapd-lan
 
-- name: Deploy LAN2 hostapd configuration
+- name: Deploy LAN2 hostapd config
   template:
     src: hostapd-lan2.conf.j2
     dest: /etc/hostapd/hostapd-lan2.conf
     mode: '0600'
   notify: restart hostapd-lan2
 
-- name: Deploy LAN hostapd systemd service
+- name: Deploy LAN hostapd systemd
   copy:
     src: hostapd-lan.service
     dest: /etc/systemd/system/hostapd-lan.service
@@ -35,7 +35,7 @@
     - daemon reload
     - restart hostapd-lan
 
-- name: Deploy LAN2 hostapd systemd service
+- name: Deploy LAN2 hostapd systemd
   copy:
     src: hostapd-lan2.service
     dest: /etc/systemd/system/hostapd-lan2.service

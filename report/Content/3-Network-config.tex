@@ -7,9 +7,9 @@ As touched on when discussing netplan (section \ref{sec:netplan.yml}) \parencite
 \begin{tabular}{|l|l|l|l|}
 \hline
 \textbf{Zone} & \textbf{Interface} & \textbf{Network} & \textbf{Firewall IP} \\ \hline
-WAN (Internet) & eth0 & 10.0.0.0/8 & 10.0.0.5/8 \\ \hline
-LAN (Trusted) & eth1 & 172.16.0.0/16 & 172.16.0.1/16 \\ \hline
-Guest (IoT) & eth2 & 192.168.0.0/24 & 192.168.0.1/24 \\ \hline
+WAN & eth0 & 10.0.0.0/8 & 10.0.0.5/8 \\ \hline
+LAN & eth1 & 172.16.0.0/16 & 172.16.0.1/16 \\ \hline
+LAN2 & eth2 & 192.168.0.0/24 & 192.168.0.1/24 \\ \hline
 \end{tabular}
 \caption{IP addressing for each firewall zone}
 \label{tab:ip-addressing}
@@ -134,11 +134,11 @@ As the deploy was validated on the VM, the config can be deployed to the firewal
     \label{fig:combined-netplan-deploy}
 \end{figure}
 
-The centre part of figure \ref{fig:combined-netplan-deploy} shows the two NICs as down, after trying to bring them up manually I realised they need to be configured as access-points, not as WiFi clients. Netplan doesn't support this but hostapd \parencite{LinuxKernel2024HostapdDocumentation} \parencite{Hostapd2024Documentation} does.
+The centre part of figure \ref{fig:combined-netplan-deploy} shows the two NICs as down. After trying to bring them up manually, I realised they need to be configured as access-points, not as WiFi clients. Netplan doesn't support this but hostapd \parencite{LinuxKernel2024HostapdDocumentation} \parencite{Hostapd2024Documentation} does.
 
-On Linux operating systems, WiFi interfaces being used as access points (APs) need the hostapd daemon to manage client authentication, and beacon broadcasting \parencite{Hostapd2024Documentation}. Netplan configures IP addressing and routing at the network layer (Layer 3), but hostapd operates at the data link and physical layers (Layers 1 and 2) to establish the wireless medium.
+On Linux operating systems, WiFi interfaces being used as access points (APs) need the hostapd daemon to manage client authentication and beacon broadcasting \parencite{Hostapd2024Documentation}. Netplan configures IP addressing and routing at the network layer (Layer 3), but hostapd operates at the data link and physical layers (Layers 1 and 2) to establish the wireless medium.
 
-To use hostapd (with logging), you need to use systemd services \parencite{Freedesktop2024Systemd} to give a level of persistence via \texttt{WantedBy=multi-user.target}. A systemd service will enable the hostapd daemons to start after network initialisation (\texttt{After=network.target}) and automatically restart on failure (\texttt{Restart=on-failure}). This isn't needed for netplan or iptables as netplan is persistant and iptables uses an additional module (REFERNECE TO IPTABLESROLE PERSISTANCE) to keep the config active.
+To use hostapd with logging, you need to use systemd services \parencite{Freedesktop2024Systemd} to provide persistence via \texttt{WantedBy=multi-user.target}. A systemd service enables the hostapd daemons to start after network initialisation (\texttt{After=network.target}) and automatically restart on failure (\texttt{Restart=on-failure}). This persistence mechanism is not needed for netplan (which maintains configuration automatically) or iptables (which uses the iptables-persistent module to maintain firewall state across reboots).
 
 As hostapd can be defined as systemd services, it fits nicely into the Ansible IaC approach, as this can be sorted into a new role defined as figure \ref{fig:ansible-hostapd-role}.
 
@@ -191,23 +191,28 @@ And after a successful deploy, it was time to push it to the firewall (figure \r
     \label{fig:ansible-firewall-deploy1}
 \end{figure}
 
-After doing some troubleshooting (checking logs in figure \ref{fig:ansible-firewall-deploy1}) and seeing my own 2.4Ghz wifi go down, it looks like 
-
-ISSUES
-
-
-
-
-
-
-
-
-
-% Demo
-
 The template uses Jinja2 variable substitution to separate configuration data from structure, enabling environment-specific deployments (testing vs. production) without modifying the template itself. Variables are defined in \texttt{roles/netplan/vars/main.yml} (Figure \ref{fig:netplan-vars}).
 
 The WAN interface (\texttt{eth0}) is the only interface with a default route, ensuring all internet-bound traffic exits through the upstream gateway at \texttt{10.0.0.1}. The LAN and LAN2 interfaces (\texttt{eth1}, \texttt{eth2}) do not define routes, as the firewall itself is the gateway for these networks - routing decisions are handled by the iptables forwarding rules discussed in Section \ref{subsec:firewall-rules}.
+
+\subsubsection{Firewall Rules and Implementation}
+\label{subsec:firewall-rules}
+
+The iptables firewall rules are deployed via Ansible using Jinja2 templates, with environment-specific configurations for each network zone. Each zone (Class-A, Class-B, Class-C) implements a defense-in-depth strategy with multiple rule sets across the filter, NAT, and mangle tables.
+
+\paragraph{Default Deny Policy:} All three network zones implement a default-deny policy with explicit allowlisting. INPUT and FORWARD chains default to DROP, with only essential traffic explicitly allowed via ACCEPT rules. This adheres to the principle of least privilege outlined in the specification.
+
+\paragraph{Class-A Network (WAN):} The external-facing ruleset (Appendix \ref{subsec:class-a-rules}) implements ingress filtering on eth0, allowing only essential services: SSH management (port 22), ICMP echo requests for reachability testing, HTTP/HTTPS (ports 80/443), and DNS (port 53). Anti-spoofing measures in the mangle table drop invalid connection states and malformed packets (fragmented packets, null flags, SYN-FIN combinations). Network Address Translation (MASQUERADE) enables both internal LAN zones to access the internet, while cross-zone forwarding between eth1 and eth2 is explicitly denied to prevent lateral movement between the trusted LAN and LAN2 networks.
+
+\paragraph{Class-B Network (LAN):} The trusted network ruleset (Appendix \ref{subsec:class-b-rules}) applies to eth1 and permits infrastructure services: DHCP (ports 67-68) for network management, DNS (port 53), HTTP/HTTPS web services, and development ports 3000 and 8080. This zone demonstrates trust with broader rule acceptance, though FORWARD rules still block direct communication with LAN2 (eth2) and restrict access to known-dangerous services (SMTP port 25, Windows RPC/SMB ports 135-445) to prevent lateral exploitation.
+
+\paragraph{Class-C Network (LAN2):} The most restrictive ruleset (Appendix \ref{subsec:class-c-rules}) applies to eth2 and serves untrusted devices. While DHCP, DNS, HTTP/HTTPS, and SSH are permitted for basic connectivity, the following security measures apply: (1) rate limiting via \texttt{iptables -m limit} restricts individual hosts to 10 connections per minute and burst traffic to 100 packets per second with 200-packet burst capacity, (2) comprehensive port blocking restricts database access (MySQL 3306, PostgreSQL 5432, MSSQL 1433), RDP (3389), and SMB/CIFS (139-445), (3) anti-spoofing rules in the mangle table drop traffic claiming RFC1918 addresses (10.0.0.0/8, 172.16.0.0/12) from external interfaces to prevent IP spoofing attacks, and (4) explicit DENY rules prevent LAN2-to-LAN forwarding, ensuring LAN2 devices cannot discover or access infrastructure on eth1.
+
+\paragraph{Connection Tracking and NAT:} All zones use stateful inspection via \texttt{-m state --state ESTABLISHED,RELATED} to permit return traffic from established connections, reducing rule complexity while maintaining security. The NAT table applies MASQUERADE rules allowing internal networks to source internet traffic through the firewall's external IP, transparently enabling internal devices to communicate with external services while hiding behind the firewall's identity.
+
+\paragraph{Logging:} Each zone implements comprehensive logging with \texttt{-j LOG --log-prefix} to capture dropped traffic with zone-specific prefixes (\texttt{INPUT-DROP}, \texttt{FORWARD-DROP}, etc.) at syslog level 4 (warning). This enables security monitoring, anomaly detection, and forensic analysis of traffic violations, critical for troubleshooting and identifying potential attack patterns.
+
+The complete firewall rulesets for all three zones are documented in Appendix \ref{app:rules} with detailed inline explanations. These rules are rendered from Jinja2 templates using Ansible variables, enabling easy modification and testing via the development workflow established in Section \ref{sec:IaC}.
 
 DNS servers are configured only on the WAN interface using Google DNS (\texttt{8.8.8.8}) and Cloudflare DNS (\texttt{1.1.1.1}) as public resolvers. Internal zone devices receive DNS configuration via DHCP, which will be discussed in the DHCP server configuration (if implemented) or rely on the firewall to forward DNS queries.
 
@@ -226,7 +231,7 @@ ubuntu@raspberrypi:~$ ip addr show
     inet 192.168.0.1/24 brd 192.168.255.255 scope global eth2
 \end{verbatim}
 
-The \texttt{ip route} command confirms that the default route points to the WAN gateway, with directly connected routes for LAN and Guest subnets:
+The \texttt{ip route} command confirms that the default route points to the WAN gateway, with directly connected routes for LAN and LAN2 subnets:
 
 \begin{verbatim}
 ubuntu@raspberrypi:~$ ip route show

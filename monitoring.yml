@@ -1,0 +1,7 @@
+---
+- name: Deploy monitoring tools and configuration
+  hosts: all
+  become: yes
+  remote_user: s4228665
+  roles:
+    - monitoring

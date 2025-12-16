@@ -1,7 +1,8 @@
 ---
-- name: Deploy base netplan template
+- name: Build the firewall
   hosts: firewall
   become: yes
   roles:
+    - iptables
     - netplan
     - hostapd

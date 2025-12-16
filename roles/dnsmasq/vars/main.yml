@@ -1,0 +1,12 @@
+---
+lan_dhcp_start: "172.16.0.100"
+lan_dhcp_end: "172.16.255.254"
+lan_dhcp_lease: "12h"
+
+lan2_dhcp_start: "192.168.0.100"
+lan2_dhcp_end: "192.168.0.254"
+lan2_dhcp_lease: "12h"
+
+# Hotfixes 
+dns_cache_size: 150
+dns_log_queries: false

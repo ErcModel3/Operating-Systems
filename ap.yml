@@ -1,0 +1,7 @@
+---
+- name: Configure access points with DHCP
+  hosts: firewall
+  become: yes
+  roles:
+    - hostapd
+    - dnsmasq
